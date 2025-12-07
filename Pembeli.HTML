@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogiSmart_Pembeli</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&display=swap");
+
+        :root {
+            --dark-bg: rgba(10, 10, 10, 0.75);
+            --glass: rgba(255, 255, 255, 0.08);
+            --hover: rgba(255, 255, 255, 0.16);
+            --text-light: #f5f5f5;
+            --accent: #ff8a00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Open Sans", sans-serif;
+        }
+
+        body {
+            background: url("image.png") center/cover fixed no-repeat;
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Overlay blur gelap */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(5px);
+            z-index: -1;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 230px;
+            background: rgba(0, 0, 0, 0.7);
+            height: 100vh;
+            padding: 25px 15px;
+            position: fixed;
+            left: 0;
+            top: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar h3 {
+            color: var(--text-light);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .menu-item {
+            color: var(--text-light);
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:hover {
+            background: var(--hover);
+        }
+
+        /* Content */
+        .content {
+            margin-left: 260px;
+            padding: 30px;
+            width: calc(100% - 260px);
+            color: white;
+        }
+
+        .search-box {
+            background: var(--glass);
+            padding: 15px;
+            border-radius: 12px;
+            backdrop-filter: blur(5px);
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            background: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .search-box input::placeholder {
+            color: #ccc;
+        }
+
+        /* Produk Grid */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: var(--glass);
+            backdrop-filter: blur(5px);
+            padding: 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: 0.2s;
+        }
+
+        .product-card:hover {
+            transform: scale(1.02);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .product-card img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+
+        .product-name {
+            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .stock {
+            font-size: 0.85rem;
+            margin-top: 4px;
+        }
+
+        .stock.available {
+            color: #4cff85;
+        }
+
+        .stock.empty {
+            color: #ff4c4c;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h3>LogiSmart</h3>
+
+        <div class="menu-item"><i class="bi bi-house-door"></i> Beranda</div>
+        <div class="menu-item"><i class="bi bi-box"></i> Produk</div>
+        <div class="menu-item"><i class="bi bi-search"></i> Pencarian</div>
+        <div class="menu-item"><i class="bi bi-info-circle"></i> Tentang Kami</div>
+        <div class="menu-item"><i class="bi bi-box-arrow-right"></i> Logout</div>
+    </div>
+
+    <!-- CONTENT MAIN -->
+    <div class="content">
+
+        <h2 style="margin-bottom: 15px;">Selamat Datang, Pembeli</h2>
+        <p>Silakan cari barang yang kamu perlukan.</p>
+
+        <!-- SEARCH BOX -->
+        <div class="search-box">
+            <input type="text" class="form-control" placeholder="Cari barang…">
+        </div>
+
+        <!-- PRODUK GRID -->
+        <div class="product-grid">
+
+            <!-- Barang Example -->
+            <div class="product-card">
+                <img src="sepatu.jpg" alt="">
+                <div class="product-name">Sepatu Sneakers</div>
+                <div class="stock available">Stok: 3 pasang</div>
+            </div>
+
+            <div class="product-card">
+                <img src="sendal.jpg" alt="">
+                <div class="product-name">Sandal Jepit</div>
+                <div class="stock empty">Habis</div>
+            </div>
+
+            <div class="product-card">
+                <img src="tas.jpg" alt="">
+                <div class="product-name">Tas Ransel</div>
+                <div class="stock available">Stok: 12 pcs</div>
+            </div>
+
+            <div class="product-card">
+                <img src="kemeja.jpg" alt="">
+                <div class="product-name">Kemeja Pria</div>
+                <div class="stock available">Stok: 5 pcs</div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

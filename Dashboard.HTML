@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>LogiSmart — Multi Role Dashboard (Demo)</title>
+
+    <!-- Bootstrap 5 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap");
+
+        :root {
+            --bg-img: url('image.png');
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.06);
+            --muted: rgba(255, 255, 255, 0.75);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: "Open Sans", sans-serif
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            background: var(--bg-img) no-repeat center/cover fixed;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.65);
+            z-index: 0;
+            backdrop-filter: blur(6px)
+        }
+
+        /* Layout */
+        .app {
+            position: relative;
+            display: flex;
+            height: 100vh;
+            gap: 20px;
+            padding: 22px;
+            z-index: 1;
+        }
+
+        /* Sidebar (semi-transparent black + blur) */
+        .sidebar {
+            width: 260px;
+            min-width: 220px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.55));
+            border-radius: 12px;
+            padding: 18px;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            height: calc(100vh - 44px);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand .logo {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            background: linear-gradient(45deg, #6ee7b7, #3b82f6);
+            color: #042b33;
+        }
+
+        .brand h3 {
+            font-size: 18px;
+            margin: 0
+        }
+
+        .brand p {
+            margin: 0;
+            font-size: 12px;
+            color: var(--muted)
+        }
+
+        .navlist {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding-top: 8px;
+            overflow: auto
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            color: var(--muted);
+            cursor: pointer;
+            transition: all .16s;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            color: #fff
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.04);
+            color: #fff
+        }
+
+        .sidebar .meta {
+            margin-top: auto;
+            font-size: 13px;
+            color: var(--muted)
+        }
+
+        /* Main content area */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            height: calc(100vh - 44px);
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(8px);
+        }
+
+        .role-switch {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        .search-input {
+            min-width: 260px;
+            max-width: 420px
+        }
+
+        /* Content panels (scroll inside to avoid very long page) */
+        .content-panel {
+            flex: 1;
+            overflow: auto;
+            padding: 16px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(6px);
+            color: #eef2f7;
+        }
+
+        /* KPI row */
+        .kpis {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 8px
+        }
+
+        .kpi {
+            flex: 1 1 180px;
+            padding: 14px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 0 6px 18px rgba(2, 6, 23, 0.5);
+        }
+
+        .kpi h3 {
+            margin: 0;
+            font-size: 20px
+        }
+
+        .kpi p {
+            margin: 4px 0 0;
+            color: var(--muted)
+        }
+
+        /* compact chart */
+        .chart-box {
+            padding: 10px;
+            border-radius: 10px;
+            background: transparent
+        }
+
+        canvas {
+            display: block;
+            max-height: 160px;
+            width: 100% !important;
+            height: 120px !important
+        }
+
+        /* table area */
+        .table-small {
+            max-height: 320px;
+            overflow: auto;
+            border-radius: 8px;
+            padding: 8px
+        }
+
+        table thead th {
+            color: #dfe8f5
+        }
+
+        table td,
+        table th {
+            color: #e8eef8;
+            border-top: 0
+        }
+
+        /* small action row */
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #fff
+        }
+
+        .badge-low {
+            background: #ff6b6b;
+            color: #21090a;
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-weight: 600
+        }
+
+        /* modal scan preview */
+        .preview {
+            max-width: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.04)
+        }
+
+        /* small helpers */
+        .muted {
+            color: var(--muted)
+        }
+
+        .small {
+            font-size: 13px
+        }
+
+        /* responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                display: none
+            }
+
+            .search-input {
+                min-width: 140px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app container-fluid">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo">LS</div>
+                <div>
+                    <h3>Logismart</h3>
+                    <p class="small muted">Inventory & Logistics</p>
+                </div>
+            </div>
+
+            <nav class="navlist" id="sidebarMenu">
+                <div class="nav-item active" data-target="dashboardView"><i class="bi bi-speedometer2"></i> Dashboard
+                </div>
+                <div class="nav-item" data-target="dataView"><i class="bi bi-box-seam"></i> Data Barang</div>
+                <div class="nav-item" data-target="inboundView"><i class="bi bi-arrow-down-circle"></i> Barang Masuk
+                </div>
+                <div class="nav-item" data-target="outboundView"><i class="bi bi-arrow-up-circle"></i> Barang Keluar
+                </div>
+                <div class="nav-item" id="petugasDiagramBtn"><i class="bi bi-graph-up"></i> Lihat Diagram</div>
+                <div class="nav-item" data-target="notifView"><i class="bi bi-bell"></i> Notifikasi</div>
+                <div class="nav-item" data-target="manageView"><i class="bi bi-people"></i> Kelola Petugas</div>
+                <div class="nav-item" data-target="aboutView"><i class="bi bi-info-circle"></i> Tentang Kami</div>
+                <div class="nav-item" data-target="logout"><i class="bi bi-box-arrow-right"></i> Logout</div>
+            </nav>
+
+            <div class="meta small">
+                Signed in as <strong id="signedName">Admin</strong><br />
+                <span class="muted">login 2 jam lalu</span>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+            <!-- TOPBAR -->
+            <div class="topbar">
+                <div style="display:flex;gap:12px;align-items:center">
+                    <div style="font-weight:700;font-size:18px">Dashboard</div>
+                    <div class="small muted">Overview & quick actions</div>
+                </div>
+
+                <div style="display:flex;align-items:center;gap:10px">
+                    <!-- role switcher for demo -->
+                    <div class="role-switch small">
+                        <label class="muted">Role:</label>
+                        <select id="roleSelect" class="form-select form-select-sm" style="width:auto">
+                            <option value="owner">Owner / Admin</option>
+                            <option value="petugas">Petugas</option>
+                        </select>
+                    </div>
+
+                    <!-- Search (behavior changes per role) -->
+                    <input id="searchBox" class="form-control form-control-sm search-input"
+                        placeholder="Cari barang..." />
+
+                    <!-- small profile -->
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <div style="text-align:right">
+                            <div class="small muted">Hello,</div>
+                            <div style="font-weight:700" id="userName">Leni</div>
+                        </div>
+                        <div
+                            style="width:40px;height:40px;border-radius:8px;background:linear-gradient(45deg,#f472b6,#7c3aed);display:flex;align-items:center;justify-content:center">
+                            L</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTENT PANEL -->
+            <section class="content-panel" id="contentPanel">
+
+                <!-- === DASHBOARD VIEW (shared header, content changes by role) === -->
+                <div id="dashboardView" class="view">
+
+                    <!-- KPIs -->
+                    <div class="kpis" id="kpiRow">
+                        <div class="kpi">
+                            <h3 id="kpiTotal">1,240</h3>
+                            <p class="small muted">Total Items</p>
+                        </div>
+                        <div class="kpi">
+                            <h3 id="kpiInbound">372</h3>
+                            <p class="small muted">Inbound (30d)</p>
+                        </div>
+                        <div class="kpi">
+                            <h3 id="kpiOutbound">298</h3>
+                            <p class="small muted">Outbound (30d)</p>
+                        </div>
+                        <div class="kpi">
+                            <h3 id="kpiLow">42 <span class="badge badge-low">Low</span></h3>
+                            <p class="small muted">Low Stock Items</p>
+                        </div>
+                    </div>
+
+                    <!-- compact chart + recent items -->
+                    <div class="row gx-3">
+                        <div class="col-lg-7 col-12">
+                            <div class="chart-box">
+                                <div
+                                    style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                                    <div><strong>Pergerakan Barang (14 hari)</strong>
+                                        <div class="small muted">Inbound vs Outbound</div>
+                                    </div>
+                                    <div class="small muted">Compact view</div>
+                                </div>
+                                <canvas id="mainChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-5 col-12">
+                            <div
+                                style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                                <div><strong>Barang Terbaru</strong>
+                                    <div class="small muted">Ringkasan</div>
+                                </div>
+                                <button class="btn btn-sm btn-ghost small" id="refreshBtn"><i
+                                        class="bi bi-arrow-clockwise"></i> Refresh</button>
+                            </div>
+
+                            <div class="table-small">
+                                <table class="table table-borderless table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Nama</th>
+                                            <th>Stok</th>
+                                            <th class="text-end">Lokasi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="recentTbody">
+                                        <!-- populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Full inventory table (compact height to avoid long scroll) -->
+                    <div style="margin-top:14px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                            <div><strong>Data Inventory</strong>
+                                <div class="small muted">Klik item untuk detail / edit (demo)</div>
+                            </div>
+                            <div class="actions">
+                                <button class="btn btn-sm btn-light" id="exportBtn"><i class="bi bi-download"></i>
+                                    Export CSV</button>
+                                <button class="btn btn-sm btn-outline-light" id="addManualBtn"><i
+                                        class="bi bi-plus-lg"></i> Tambah Manual</button>
+                                <button class="btn btn-sm btn-outline-light" id="openScanBtn"><i
+                                        class="bi bi-upc-scan"></i> Scan / Foto</button>
+                            </div>
+                        </div>
+
+                        <div class="table-small">
+                            <table class="table table-hover table-striped align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>SKU</th>
+                                        <th>Nama Barang</th>
+                                        <th>Kategori</th>
+                                        <th>Stok</th>
+                                        <th>Lokasi</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventoryTbody">
+                                    <!-- populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div> <!-- end dashboardView -->
+
+                <!-- === DATA VIEW (same table but can be addressed) === -->
+                <div id="dataView" class="view d-none">
+                    <h5>Data Barang — Semua</h5>
+                    <div class="table-small mt-2">
+                        <table class="table table-hover table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Nama</th>
+                                    <th>Kategori</th>
+                                    <th>Stok</th>
+                                    <th>Lokasi</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- === INBOUND VIEW (Petugas) === -->
+                <div id="inboundView" class="view d-none">
+                    <h5>Barang Masuk (Input)</h5>
+                    <div class="small muted">Untuk Petugas: scan atau tambah manual (foto wajib)</div>
+
+                    <div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap">
+                        <div style="flex:1;min-width:240px">
+                            <label class="small">Scan / Masukkan SKU</label>
+                            <input id="scanSku" class="form-control form-control-sm"
+                                placeholder="Scan barcode atau ketik SKU" />
+                        </div>
+
+                        <div style="min-width:200px">
+                            <label class="small">Foto Barang (wajib)</label>
+                            <input id="scanPhoto" type="file" accept="image/*" class="form-control form-control-sm" />
+                        </div>
+
+                        <div style="min-width:140px;display:flex;align-items:end">
+                            <button id="submitScan" class="btn btn-sm btn-primary">Simpan & Tambah</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="small muted">Preview foto terakhir:</div>
+                        <div id="scanPreview" class="preview mt-2"></div>
+                    </div>
+                </div>
+
+                <!-- === OUTBOUND VIEW (Petugas) === -->
+                <div id="outboundView" class="view d-none">
+                    <h5>Barang Keluar (Proses)</h5>
+                    <div class="small muted">Proses barang keluar — pilih item dan kurangi stok</div>
+                    <div class="table-small mt-2">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>SKU</th>
+                                    <th>Nama</th>
+                                    <th>Stok</th>
+                                    <th>Kurangi</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="outboundTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- === NOTIF VIEW === -->
+                <div id="notifView" class="view d-none">
+                    <h5>Notifikasi</h5>
+                    <div class="small muted">Stok menipis / tindakan yang perlu diambil</div>
+                    <ul id="notifList" style="margin-top:12px"></ul>
+                </div>
+
+                <!-- === MANAGE PETUGAS VIEW === -->
+                <div id="manageView" class="view d-none">
+                    <h5>Kelola Petugas</h5>
+                    <div class="small muted">Tambah / edit akun petugas (demo)</div>
+                    <div style="margin-top:12px">
+                        <button class="btn btn-sm btn-outline-light">Tambah Petugas</button>
+                    </div>
+                </div>
+
+                <!-- === ABOUT VIEW === -->
+                <div id="aboutView" class="view d-none">
+                    <h5>Tentang Kami</h5>
+                    <p class="small muted">LogiSmart — Sistem manajemen inventory & logistics. Dibuat untuk demo.</p>
+                    <p class="small muted">Contact: support@logismart.example</p>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- TOAST area for alerts -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index:2000">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">Notifikasi</strong>
+                <small class="text-muted">sekarang</small>
+                <button type="button" class="btn-close ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastBody">Pesan</div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- APP JAVASCRIPT (demo logic) -->
+    <script>
+        /***********************
+         * Demo dataset
+         ***********************/
+        const items = [
+            { sku: 'BRG-0012', name: 'Sepatu Sneakers', cat: 'Sepatu', stok: 3, loc: 'Gudang 2 / Rak 35' },
+            { sku: 'BRG-0045', name: 'Sendal Jepit', cat: 'Alas Kaki', stok: 0, loc: 'Gudang 1 / Rak 22' },
+            { sku: 'BRG-0033', name: 'Mouse Wireless', cat: 'Peripheral', stok: 60, loc: 'Gudang 3 / Rak 12' },
+            { sku: 'BRG-0088', name: 'Adapter USB', cat: 'Accessory', stok: 6, loc: 'Gudang 2 / Box C3' },
+            { sku: 'BRG-0123', name: 'Kabel LAN 5m', cat: 'Kabel', stok: 120, loc: 'Gudang 1 / Rak A1' },
+            { sku: 'BRG-0200', name: 'Tali Sepatu', cat: 'Aksesoris', stok: 18, loc: 'Gudang 2 / Rak 10' }
+        ];
+
+        // small inbound/outbound numbers for chart
+        const inboundData = [12, 18, 22, 30, 28, 24, 16, 20, 26, 34, 22, 18, 16, 28];
+        const outboundData = [8, 12, 10, 18, 22, 20, 14, 10, 18, 12, 16, 20, 10, 18];
+        const labels = Array.from({ length: 14 }, (_, i) => `-${13 - i}d`);
+
+        /***********************
+         * Elements
+         ***********************/
+        const roleSelect = document.getElementById('roleSelect');
+        const signedName = document.getElementById('signedName');
+        const userName = document.getElementById('userName');
+        const searchBox = document.getElementById('searchBox');
+        const contentPanel = document.getElementById('contentPanel');
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        const recentTbody = document.getElementById('recentTbody');
+        const inventoryTbody = document.getElementById('inventoryTbody');
+        const dataTbody = document.getElementById('dataTbody');
+        const notifList = document.getElementById('notifList');
+        const outboundTbody = document.getElementById('outboundTbody');
+        const petugasDiagramBtn = document.getElementById('petugasDiagramBtn');
+        const mainChartCtx = document.getElementById('mainChart').getContext('2d');
+
+        /***********************
+         * Role & View management
+         ***********************/
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.add('d-none'));
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('d-none');
+            // mark sidebar active
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.nav-item[data-target="' + id + '"]').forEach(n => n.classList.add('active'));
+        }
+
+        // sidebar click handlers (menu)
+        sidebarMenu.querySelectorAll('.nav-item[data-target]').forEach(btn => {
+            btn.addEventListener('click', () => showView(btn.getAttribute('data-target')));
+        });
+
+        // quick: dashboard shown initially
+        showView('dashboardView');
+
+        // role switching changes UI behavior
+        function applyRole(role) {
+            signedName.innerText = role === 'pembeli' ? 'Pembeli (Guest)' : (role === 'petugas' ? 'Petugas' : 'Owner');
+            userName.innerText = signedName.innerText.split(' ')[0];
+            // show/hide menu items for roles (demo)
+            document.querySelectorAll('.nav-item').forEach(n => n.style.display = 'flex');
+            if (role === 'pembeli') {
+                // pembeli doesn't need manage & inbound/outbound
+                document.querySelector('[data-target="manageView"]').style.display = 'none';
+                document.querySelector('[data-target="inboundView"]').style.display = 'none';
+                document.querySelector('[data-target="outboundView"]').style.display = 'none';
+                petugasDiagramBtn.style.display = 'none';
+            }
+            if (role === 'petugas') {
+                // petugas doesn't need manage
+                document.querySelector('[data-target="manageView"]').style.display = 'none';
+            }
+        }
+
+        roleSelect.addEventListener('change', () => {
+            applyRole(roleSelect.value);
+            // ensure dashboard visible
+            showView('dashboardView');
+            renderAll();
+        });
+
+        /***********************
+         * Render functions
+         ***********************/
+        function renderRecent() {
+            recentTbody.innerHTML = '';
+            // show up to 5 latest items
+            items.slice(0, 5).forEach(it => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td>${it.sku}</td><td>${it.name}</td><td>${it.stok}</td><td class="text-end small muted">${it.loc}</td>`;
+                recentTbody.appendChild(tr);
+            });
+        }
+
+        function renderInventory(filterText = '') {
+            inventoryTbody.innerHTML = '';
+            dataTbody.innerHTML = '';
+            outboundTbody.innerHTML = '';
+            const role = roleSelect.value;
+            const q = filterText.trim().toLowerCase();
+            items.forEach(it => {
+                if (q && !(it.name.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q))) return;
+                // inventory row (owner/petugas)
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${it.sku}</td>
+          <td>${it.name}</td>
+          <td>${it.cat}</td>
+          <td>${it.stok}</td>
+          <td>${it.loc}</td>
+          <td><button class="btn btn-sm btn-outline-light btn-detail" data-sku="${it.sku}">Lihat</button></td>`;
+                inventoryTbody.appendChild(row);
+
+                // data table
+                const r2 = row.cloneNode(true);
+                dataTbody.appendChild(r2);
+
+                // outbound row (with input)
+                const outRow = document.createElement('tr');
+                outRow.innerHTML = `<td>${it.sku}</td><td>${it.name}</td><td>${it.stok}</td>
+          <td><input type="number" min="1" max="${it.stok}" class="form-control form-control-sm qtyInput" style="width:90px" ${it.stok === 0 ? 'disabled' : ''}></td>
+          <td><button class="btn btn-sm btn-danger btn-out" data-sku="${it.sku}">Proses</button></td>`;
+                outboundTbody.appendChild(outRow);
+            });
+
+            // pembeli view: show only name + stok + status
+            if (role === 'pembeli') {
+                inventoryTbody.innerHTML = '';
+                items.filter(it => {
+                    const q = filterText.trim().toLowerCase();
+                    if (q && !(it.name.toLowerCase().includes(q) || it.sku.toLowerCase().includes(q))) return false;
+                    return true;
+                }).forEach(it => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${it.name}</td><td>${it.stok}</td><td class="small muted">${it.loc}</td><td>${it.stok > 0 ? '<span class="badge bg-success">Tersedia</span>' : '<span class="badge bg-dark">Habis</span>'}</td><td></td><td></td>`;
+                    inventoryTbody.appendChild(tr);
+                });
+            }
+
+            // attach detail buttons (demo)
+            document.querySelectorAll('.btn-detail').forEach(b => {
+                b.addEventListener('click', () => {
+                    const sku = b.getAttribute('data-sku');
+                    const it = items.find(x => x.sku === sku);
+                    alert(`${it.name}\\nSKU: ${it.sku}\\nStok: ${it.stok}\\nLokasi: ${it.loc}`);
+                });
+            });
+
+            // attach outbound buttons
+            document.querySelectorAll('.btn-out').forEach(b => {
+                b.addEventListener('click', () => {
+                    const sku = b.getAttribute('data-sku');
+                    const tr = b.closest('tr');
+                    const qty = tr.querySelector('.qtyInput')?.value || 0;
+                    if (!qty || qty <= 0) { alert('Masukkan qty valid'); return; }
+                    processOutbound(sku, parseInt(qty, 10));
+                });
+            });
+        }
+
+        function renderNotifs() {
+            notifList.innerHTML = '';
+            const lowItems = items.filter(it => it.stok > 0 && it.stok <= 10);
+            const outItems = items.filter(it => it.stok === 0);
+            if (lowItems.length === 0 && outItems.length === 0) {
+                notifList.innerHTML = '<li class="small muted">Tidak ada notifikasi.</li>';
+                return;
+            }
+            lowItems.forEach(it => {
+                const li = document.createElement('li');
+                li.innerHTML = `<strong class="badge-low">${it.stok}</strong> &nbsp; ${it.name} — stok menipis (lokasi: ${it.loc})`;
+                notifList.appendChild(li);
+            });
+            outItems.forEach(it => {
+                const li = document.createElement('li');
+                li.innerHTML = `<span class="badge bg-dark">Habis</span> &nbsp; ${it.name} — stok 0`;
+                notifList.appendChild(li);
+            });
+        }
+
+        function renderAll() {
+            renderRecent();
+            renderInventory(searchBox.value || '');
+            renderNotifs();
+            updateKPIs();
+        }
+
+        function updateKPIs() {
+            const total = items.reduce((s, i) => s + (i.stok > 0 ? 1 : 1), 0); // demo counts different meaning
+            document.getElementById('kpiTotal').innerText = items.length;
+            document.getElementById('kpiInbound').innerText = inboundData.reduce((a, b) => a + b, 0);
+            document.getElementById('kpiOutbound').innerText = outboundData.reduce((a, b) => a + b, 0);
+            const lowCount = items.filter(it => it.stok > 0 && it.stok <= 10).length;
+            document.getElementById('kpiLow').innerHTML = `${lowCount} <span class="badge badge-low">Low</span>`;
+        }
+
+        /***********************
+         * Chart (compact line chart)
+         ***********************/
+        const mainChart = new Chart(mainChartCtx, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Inbound', data: inboundData, tension: 0.35, borderWidth: 2, fill: true, backgroundColor: 'rgba(75,192,192,0.06)', borderColor: 'rgba(75,192,192,0.9)' },
+                    { label: 'Outbound', data: outboundData, tension: 0.35, borderWidth: 2, fill: true, backgroundColor: 'rgba(153,102,255,0.04)', borderColor: 'rgba(153,102,255,0.9)' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { x: { display: false }, y: { display: false } }
+            }
+        });
+
+        // Petugas modal-like diagram action (opens chart in small overlay)
+        petugasDiagramBtn.addEventListener('click', () => {
+            // Only petugas & owner can open (but button hidden for pembeli already)
+            const role = roleSelect.value;
+            if (role === 'pembeli') { alert('Tidak tersedia untuk pembeli'); return; }
+            // Show quick modal overlay
+            const overlay = document.createElement('div');
+            overlay.style.position = 'fixed'; overlay.style.inset = 0; overlay.style.zIndex = 4000; overlay.style.display = 'flex'; overlay.style.alignItems = 'center'; overlay.style.justifyContent = 'center';
+            overlay.style.background = 'rgba(0,0,0,0.6)';
+            overlay.innerHTML = `<div style="background:rgba(255,255,255,0.03);padding:16px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);width:90%;max-width:720px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <strong style="color:#fff">Diagram (14 hari)</strong>
+          <button class="btn btn-sm btn-outline-light" id="closeDiag">Tutup</button>
+        </div>
+        <canvas id="miniChart" style="height:220px"></canvas>
+      </div>`;
+            document.body.appendChild(overlay);
+            const miniCtx = overlay.querySelector('#miniChart').getContext('2d');
+            new Chart(miniCtx, {
+                type: 'line',
+                data: { labels, datasets: [{ label: 'Inbound', data: inboundData, tension: 0.3, borderColor: 'rgba(75,192,192,0.9)', fill: true, backgroundColor: 'rgba(75,192,192,0.06)' }, { label: 'Outbound', data: outboundData, tension: 0.3, borderColor: 'rgba(153,102,255,0.9)', fill: true, backgroundColor: 'rgba(153,102,255,0.04)' }] },
+                options: { plugins: { legend: { position: 'bottom' } }, responsive: true, maintainAspectRatio: false }
+            });
+            overlay.querySelector('#closeDiag').addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        });
+
+        /***********************
+         * Search behavior per role
+         ***********************/
+        searchBox.addEventListener('input', () => {
+            const role = roleSelect.value;
+            const q = searchBox.value.trim().toLowerCase();
+            // For pembeli: show availability only -> inventory render will handle it
+            // For petugas/owner: show full details
+            renderInventory(q);
+        });
+
+        /***********************
+         * Scan / add item (petugas)
+         ***********************/
+        const scanPhoto = document.getElementById('scanPhoto');
+        const scanSku = document.getElementById('scanSku');
+        const scanPreview = document.getElementById('scanPreview');
+        const submitScan = document.getElementById('submitScan');
+
+        scanPhoto.addEventListener('change', () => {
+            const f = scanPhoto.files[0];
+            if (!f) { scanPreview.innerHTML = ''; return; }
+            const img = document.createElement('img');
+            img.style.width = '100%';
+            img.src = URL.createObjectURL(f);
+            scanPreview.innerHTML = ''; scanPreview.appendChild(img);
+        });
+
+        submitScan.addEventListener('click', () => {
+            const role = roleSelect.value;
+            if (role === 'pembeli') { alert('Fitur ini hanya untuk petugas/owner'); return; }
+            const sku = scanSku.value.trim();
+            const f = scanPhoto.files[0];
+            if (!sku) { alert('Masukkan SKU/Scan terlebih dahulu'); return; }
+            if (!f) { alert('Foto barang wajib dilampirkan'); return; }
+            // Simulate saving: add item if not exist, or increase stok
+            const idx = items.findIndex(x => x.sku === sku);
+            if (idx >= 0) {
+                items[idx].stok += 1;
+            } else {
+                items.unshift({ sku, name: 'Item Baru (scan)', cat: 'Unk', stok: 1, loc: 'Gudang 1 / Box X' });
+            }
+            // reset
+            scanSku.value = ''; scanPhoto.value = ''; scanPreview.innerHTML = '';
+            renderAll();
+            showToast('Barang tersimpan (scan) ✔');
+        });
+
+        /***********************
+         * Outbound process
+         ***********************/
+        function processOutbound(sku, qty) {
+            const it = items.find(x => x.sku === sku);
+            if (!it) return;
+            if (qty > it.stok) { alert('Qty melebihi stok'); return; }
+            it.stok -= qty;
+            renderAll();
+            showToast(`Proses keluar: ${it.name} (-${qty})`);
+        }
+
+        /***********************
+         * Toast helper
+         ***********************/
+        const toastEl = document.getElementById('liveToast');
+        const toastBody = document.getElementById('toastBody');
+        const bsToast = new bootstrap.Toast(toastEl, { delay: 3500 });
+        function showToast(msg) {
+            toastBody.innerText = msg;
+            bsToast.show();
+        }
+
+        /***********************
+         * Export CSV (simple)
+         ***********************/
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            const csv = items.map(i => `${i.sku},"${i.name}",${i.cat},${i.stok},"${i.loc}"`).join('\\n');
+            const blob = new Blob([`SKU,Name,Category,Stock,Location\\n${csv}`], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'inventory.csv'; a.click(); URL.revokeObjectURL(url);
+            showToast('Export CSV siap ✔');
+        });
+
+        // refresh button
+        document.getElementById('refreshBtn').addEventListener('click', () => { renderAll(); showToast('Refreshed'); });
+
+        // add manual button opens quick prompt
+        document.getElementById('addManualBtn').addEventListener('click', () => {
+            const role = roleSelect.value;
+            if (role === 'pembeli') { alert('Tidak tersedia untuk pembeli'); return; }
+            const name = prompt('Nama barang:'); if (!name) return;
+            const sku = prompt('SKU:'); if (!sku) return;
+            const stok = parseInt(prompt('Stok awal:'), '10') || 1;
+            const loc = prompt('Lokasi:') || 'Gudang 1';
+            const cat = prompt('Kategori:') || 'Umum';
+            // require photo? For demo, we'll ask yes/no
+            const needPhoto = confirm('Apakah akan melampirkan foto? (disarankan)');
+            if (needPhoto) {
+                alert('Untuk demo, foto tidak diupload. Di implementasi nyata, upload wajib.');
+            }
+            items.unshift({ sku, name, cat, stok, loc });
+            renderAll(); showToast('Tambah manual berhasil');
+        });
+
+        // initial render
+        applyRole('owner');
+        renderAll();
+
+        // small: if any item low, prompt notification for owner/petugas
+        function checkLowStockNotify() {
+            const low = items.filter(i => i.stok > 0 && i.stok <= 10);
+            const out = items.filter(i => i.stok === 0);
+            if ((low.length > 0 || out.length > 0) && (roleSelect.value === 'owner' || roleSelect.value === 'petugas')) {
+                const msg = `${low.length} item menipis, ${out.length} item habis.`;
+                showToast(msg);
+            }
+        }
+        checkLowStockNotify();
+
+        // attach sidebar nav-item click for "Lihat Diagram" to open mini diag too
+        // (petugasDiagramBtn already handled above)
+
+    </script>
+</body>
+
+</html>
